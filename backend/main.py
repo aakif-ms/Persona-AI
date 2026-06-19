@@ -1,6 +1,19 @@
-def main():
-    print("Hello from backend!")
+from fastapi import FastAPI, BackgroundTasks
+from pydantic import BaseModel
+from queue.redis_queue import push_event
 
+app = FastAPI(title="Persona AI - Observation Layer")
 
-if __name__ == "__main__":
-    main()
+class EventPayload(BaseModel):
+    event_type: str
+    source: str
+    data: dict
+
+@app.get("/")
+async def health_check():
+    return {"status": "Observation Layer Active"}
+
+@app.post("/webhook/event")
+async def receive_event(event: EventPayload, background_task: BackgroundTasks):
+    background_task.add_task(push_event, event.model_dump())
+    return {"status": "Event queued successfully"}
