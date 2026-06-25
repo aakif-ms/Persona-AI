@@ -24,7 +24,7 @@ def get_gmail_service():
     return build('gmail', 'v1', credentials=creds)
 
 async def check_new_emails(service):
-    results = service.users().messages().list(userId='me', labelIds=['Inbox'], maxResults=5).execute()
+    results = service.users().messages().list(userId='me', labelIds=['INBOX'], maxResults=5).execute()
     messages = results.get('messages', [])
     
     events = []
