@@ -19,7 +19,7 @@ class SemanticMemory:
         RETURN e1, r, e2
         """
         async with self.driver.session() as session:
-            await session.run(query, entity_name=entity_name, target_name=target_name)4
+            await session.run(query, entity_name=entity_name, target_name=target_name)
     
     async def get_user_context(self, entity_name: str):
         query = """

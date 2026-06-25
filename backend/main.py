@@ -1,6 +1,6 @@
 from fastapi import FastAPI, BackgroundTasks
 from pydantic import BaseModel
-from queue.redis_queue import push_event
+from event_queue.redis_queue import push_event
 
 app = FastAPI(title="Persona AI - Observation Layer")
 
