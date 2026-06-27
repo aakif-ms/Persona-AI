@@ -6,40 +6,50 @@ BACKEND_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir
 if BACKEND_ROOT not in sys.path:
     sys.path.insert(0, BACKEND_ROOT)
 
-from event_queue.redis_queue import pop_event
+import asyncio
+from event_queue.redis_queue import pop_event, push_task
 from memory.episodic_memory import store_event, init_db
 from memory.semantic_memory import SemanticMemory
+from memory.long_term_memory import search_similar_memories
+from agents.planner_agent.planner import planner_app
+from agents.task_decomposer.decomposer import decompose_goal
 
 async def consume_events():
-    print("Initializing Episodic Database...")
+    print("Initializing Databases...")
     await init_db()
-    
-    print("Initializing Semantic Graph Database...")
     semantic_mem = SemanticMemory()
-    
-    print("Database Systems Ready. Listening for events...")
+    print("Systems Ready. Listening for events...")
 
     while True:
         event = await pop_event()
         if event:
             event_type = event.get('event_type', 'unknown')
+            desc = f"Raw Event: {event_type}"
             
-            if event_type == "email_received":
-                desc = f"Received email snippet: {event.get('snippet', '')[:75]}..."
-                
-                if "interview" in event.get('snippet', '').lower() or "scheduled" in event.get('snippet', '').lower():
-                    await semantic_mem.create_user_relationship("User", "APPLYING_TO", "Google")
-                    await semantic_mem.create_user_relationship("User", "WEAK_AT", "DSA")  
-
-            elif event_type == "calendar_event_detected":
-                desc = f"Scheduled event: {event.get('title')} starting at {event.get('start_time')}"
-                if "google" in event.get('title', '').lower():
-                    await semantic_mem.create_user_relationship("User", "INTERVIEWING_WITH", "Google")
-            else:
-                desc = "Unknown event detected."
-
             await store_event(event_type=event_type, description=desc, metadata=event)
-            print(f"Successfully processed and updated semantic maps for: {event_type}")
+                    
+            past_context = await search_similar_memories(str(event), limit=2)
+            
+            initial_state = {
+                "event": event,
+                "memory_context": past_context,
+                "action_required": False,
+                "goal": None,
+                "reasoning": ""
+            }
+            
+            final_state = planner_app.invoke(initial_state)
+            
+            if final_state["action_required"]:
+                goal = final_state['goal']
+                print(f"Goal Generated: {goal}")
+                
+                tasks = decompose_goal(goal, event)
+                
+                for task in tasks:
+                    await push_task(task)
+                    print(f"Queued Task for {task['agent'].upper()} Agent: {task['instruction']}")
+
         else:
             await asyncio.sleep(1)
 
