@@ -30,3 +30,15 @@ class SemanticMemory:
             result = await session.run(query, entity_name=entity_name)
             records = await result.data()
             return records
+        
+    async def get_all_relationships(self):
+        query = """
+        MATCH (e1:Entity)-[r]->(e2:Entity)
+        RETURN e1.name AS source, type(r) AS relation, e2.name AS target
+        LIMIT 50
+        """
+        async with self.driver.session() as session:
+            result = await session.run(query)
+            records = await result.data()
+            return records
+        

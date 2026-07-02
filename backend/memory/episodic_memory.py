@@ -23,3 +23,15 @@ async def store_event(event_type: str, description: str, metadata: dict):
         VALUES($1, $2, $3, $4)
     ''', event_type, description, datetime.datetime.now(datetime.timezone.utc), json.dumps(metadata))
     await conn.close()
+    
+async def get_recent_events(limit: int = 10):
+    conn = await asyncpg.connect(DATABASE_URL)
+    records = await conn.fetch('''
+        SELECT id, event_type, description, timestamp
+        FROM events
+        ORDER BY timestamp DESC
+        LIMIT $1
+    ''', limit)
+    await conn.close()
+    
+    return [dict(record) for record in records]
