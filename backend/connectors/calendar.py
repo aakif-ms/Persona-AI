@@ -26,6 +26,8 @@ def get_calendar_service():
 
     return build('calendar', 'v3', credentials=creds)
 
+seen_events = set()
+
 async def check_new_events(service):
     now = datetime.datetime.now(datetime.timezone.utc).isoformat()
     events_result = service.events().list(
@@ -39,6 +41,12 @@ async def check_new_events(service):
 
     for event in events:
         start = event['start'].get('datetime', event['start'].get('date'))
+
+        if event["summary"] in seen_events:
+            continue
+    
+        seen_events.add(event["summary"])
+
         system_events.append({
             "event_type": "calendar_event_detected",
             "title": event.get('summary', 'Untitled Event'),

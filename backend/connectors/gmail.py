@@ -26,12 +26,19 @@ def get_gmail_service():
     
     return build('gmail', 'v1', credentials=creds)
 
+seen_messages = set()
+
 async def check_new_emails(service):
     results = service.users().messages().list(userId='me', labelIds=['INBOX'], maxResults=5).execute()
     messages = results.get('messages', [])
     
     events = []
     for msg in messages:
+        if msg["id"] in seen_messages:
+            continue
+        
+        seen_messages.add(msg["id"])
+        
         txt = service.users().messages().get(userId='me', id=msg['id']).execute()
         events.append({
             "event_type": "email_received",
