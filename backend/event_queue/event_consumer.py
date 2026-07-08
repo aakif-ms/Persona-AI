@@ -10,17 +10,25 @@ import asyncio
 from event_queue.redis_queue import pop_event, push_task
 from memory.episodic_memory import store_event, init_db
 from memory.semantic_memory import SemanticMemory
-from memory.long_term_memory import search_similar_memories
+from memory.long_term_memory import init_qdrant, search_similar_memories
 from agents.planner_agent.planner import planner_app
 from agents.task_decomposer.decomposer import decompose_goal
 
-async def consume_events():
+async def consume_events(max_cycles):
     print("Initializing Databases...")
-    await init_db()
+    db_ready = await init_db()
+    if not db_ready:
+        print("Database is unavailable; continuing without persistence.")
+    try:
+        await init_qdrant()
+    except Exception as exc:
+        print(f"Qdrant unavailable: {exc}")
     semantic_mem = SemanticMemory()
     print("Systems Ready. Listening for events...")
 
-    while True:
+    cycle = 0
+
+    while cycle < max_cycles:
         event = await pop_event()
         if event:
             event_type = event.get('event_type', 'unknown')
@@ -50,8 +58,11 @@ async def consume_events():
                     await push_task(task)
                     print(f"Queued Task for {task['agent'].upper()} Agent: {task['instruction']}")
 
+            cycle += 1
         else:
+            cycle += 1
             await asyncio.sleep(1)
 
 if __name__ == "__main__":
-    asyncio.run(consume_events())
+    print("Reached main")
+    asyncio.run(consume_events(max_cycles=3))

@@ -5,7 +5,6 @@ from langchain_openai import ChatOpenAI
 class Task(BaseModel):
     agent: str = Field(description="Must be exactly one of: 'research', 'scheduler', 'reminder'")
     instruction: str = Field(description="Clear, specific instruction for the agent.")
-    payload: dict = Field(description="JSON dictionary of any specific data the agent needs (e.g., company name, time)")
 
 class TaskPlan(BaseModel):
     tasks: List[Task] = Field(description="Ordered list of tasks to accomplish the goal")

@@ -20,7 +20,7 @@ async def init_qdrant():
         )
 
 async def store_memory_summary(summary: str, metadata: dict):
-    try:
+    try:    
         await init_qdrant()
         vector = generate_embedding(summary)
         point_id = str(uuid.uuid4())

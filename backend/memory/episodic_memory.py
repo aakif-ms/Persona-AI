@@ -9,7 +9,6 @@ DATABASE_URL = os.getenv(
     "postgresql://postgres:password@localhost:5432/persona_db",
 )
 
-
 async def init_db():
     try:
         conn = await asyncpg.connect(DATABASE_URL)
