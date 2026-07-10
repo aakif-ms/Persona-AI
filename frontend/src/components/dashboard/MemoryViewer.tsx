@@ -3,13 +3,20 @@
 import { useEffect, useState } from "react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 
+const SEMANTIC_MEMORY_ENDPOINT = "/api/backend/memory/semantic";
+
 export default function MemoryViewer() {
   const [relationships, setRelationships] = useState<any[]>([]);
 
   useEffect(() => {
     const fetchMemory = async () => {
       try {
-        const res = await fetch("http://localhost:8000/api/memory/semantic");
+        const res = await fetch(SEMANTIC_MEMORY_ENDPOINT);
+
+        if (!res.ok) {
+          throw new Error(`Request failed with status ${res.status}`);
+        }
+
         const data = await res.json();
         setRelationships(data.relationships);
       } catch (error) {

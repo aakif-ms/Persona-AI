@@ -5,13 +5,20 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 
+const EVENTS_ENDPOINT = "/api/backend/events";
+
 export default function ActivityFeed() {
   const [events, setEvents] = useState<any[]>([]);
 
   useEffect(() => {
     const fetchEvents = async () => {
       try {
-        const res = await fetch("http://localhost:8000/api/events");
+        const res = await fetch(EVENTS_ENDPOINT);
+
+        if (!res.ok) {
+          throw new Error(`Request failed with status ${res.status}`);
+        }
+
         const data = await res.json();
         setEvents(data.events);
       } catch (error) {
@@ -30,7 +37,7 @@ export default function ActivityFeed() {
         <CardTitle>Activity Feed</CardTitle>
       </CardHeader>
       <CardContent>
-        <ScrollArea className="h-[300px] w-full pr-4">
+        <ScrollArea className="h-75 w-full pr-4">
           <div className="space-y-4">
             {events.map((evt) => (
               <div key={evt.id} className="flex flex-col space-y-1 border-b pb-2">
